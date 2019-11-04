@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script src="https://cdn.bootcss.com/jquery/1.11.1/jquery.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/js/bootstrap.min.js"
+            integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src="https://cdn.bootcss.com/webuploader/0.1.1/webuploader.min.js"></script>
+    <link href="https://cdn.bootcss.com/webuploader/0.1.1/webuploader.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+</head>
+
+<body>
+    <div style="margin:30px 0 0 30px;">
+        <div id="picker" style="float:left;">Select File</div>
+        <div id="progress" class="progress" style="width:500px;float:left;margin:10px 0 0 20px;">
+            <div class="progress-bar progress-bar-striped active" role="progressbar" style="width:0%;"></div>
+        </div>
+        <div style="clear:both;"></div>
+    </div>
+    <script type="text/javascript">
+    $(document).ready(function() {
+        var task_id = WebUploader.Base.guid(); // 产生文件唯一标识符task_id
+        var uploader = WebUploader.create({
+            swf: './static/webuploader/Uploader.swf',
+            server: '{{ url_for("upload_part") }}', // 上传分片地址
+            pick: '#picker',
+            auto: true,
+            chunked: true,
+            chunkSize: 5 * 1024 * 1024,
+            chunkRetry: 3,
+            threads: 1,
+            duplicate: true,
+            compress: false,
+            formData: { // 上传分片的http请求中一同携带的数据
+                task_id: task_id,
+            },
+        });
+
+        uploader.on('startUpload', function() { // 开始上传时，调用该方法
+            $('#progress').show();
+            $('.progress-bar').css('width', '0%');
+            $('.progress-bar').text('0%');
+            $('.progress-bar').removeClass('progress-bar-danger progress-bar-success');
+            $('.progress-bar').addClass('active progress-bar-striped');
+        });
+
+        uploader.on('uploadProgress', function(file, percentage) { // 一个分片上传成功后，调用该方法
+            $('.progress-bar').css('width', percentage * 100 - 1 + '%');
+            $('.progress-bar').text(Math.floor(percentage * 100 - 1) + '%');
+        });
+
+        uploader.on('uploadSuccess', function(file) { // 整个文件的所有分片都上传成功后，调用该方法
+            var data = { 'task_id': task_id, 'filename': file.source['name'] };
+            $.get('{{ url_for("upload_success") }}', data);
+            $('.progress-bar').css('width', '100%');
+            $('.progress-bar').text('100%');
+            $('.progress-bar').addClass('progress-bar-success');
+            $('.progress-bar').text('上传完成');
+        });
+
+        uploader.on('uploadError', function(file) { // 上传过程中发生异常，调用该方法
+            $('.progress-bar').css('width', '100%');
+            $('.progress-bar').text('100%');
+            $('.progress-bar').addClass('progress-bar-danger');
+            $('.progress-bar').text('上传失败');
+        });
+
+        uploader.on('uploadComplete', function(file) { // 上传结束，无论文件最终是否上传成功，该方法都会被调用
+            $('.progress-bar').removeClass('active progress-bar-striped');
+        });
+
+        $('#progress').hide();
+    });
+    </script>
+    <!--
+    <div style="margin:30px 0 0 30px;">
+        <form action="/dir" method="post" class="form-inline">
+            <div class="form-group">
+                <input type="text" name="dir_name" class="form-control" placeholder="Dir Name">
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-info">Yes</button>
+            </div>
+        </form>
+    </div>
+    -->
+    <div style="margin:30px 0 0 30px;">
+        <form action="/file/list" method="get">
+            <button type="submit" class="btn btn-info">File List</button>
+        </form>
+    </div>
+</body>
+</html>

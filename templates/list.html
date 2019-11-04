@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script src="https://cdn.bootcss.com/jquery/1.11.1/jquery.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/js/bootstrap.min.js"
+            integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src="https://cdn.bootcss.com/echarts/4.4.0-rc.1/echarts-en.common.js"></script>
+    <script src="https://cdn.bootcss.com/webuploader/0.1.1/webuploader.min.js"></script>
+    <link href="https://cdn.bootcss.com/webuploader/0.1.1/webuploader.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+</head>
+
+<body>
+<div class="row" align="center">
+    <h2 class="form-signin-heading text-info">File List</h2>
+    <h5 class="text-warning">Click file link to download</h5>
+    <div class="col-md-10 col-md-offset-1">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>File name</th>
+                    <th>Size</th>
+                    <th>Create Time</th>
+                    <th>Del</th>
+                    <th>Rename</th>
+                    <th>Share</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for key in files_and_size.keys() %}
+                <tr>
+                    {% if not files_and_size[key][1] == "dir" %}
+                        <td><a href="{{ url_for('file_download', filename=files_and_size[key][0]) }}">{{ key }}</a></td>
+                        <td>{{ files_and_size[key][1] }}</td>
+                        <td>{{ files_and_size[key][2] }}</td>
+                        <td>
+                            <!--
+                            <form action="{{ url_for('file_delete' ,filename=files_and_size[key][0]) }}" method="get">
+                                <button type="submit" class="btn btn-xs btn-danger">Del</button>
+                            </form>
+                            -->
+                            <a class="btn btn-xs btn-danger" data-toggle="modal" data-href='{{url_for('file_delete' ,filename=files_and_size[key][0])}}'
+                                    data-target="#confirm-delete">Del</a>
+                        </td>
+                        <div class="modal fade" id="confirm-delete" tabindex="-1" role="dialog" aria-labelledby="myModalLabel1"
+                                aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                                            <h4 class="modal-title" id="myModalLabel1">Delete</h4>
+                                        </div>
+                                        <div class="modal-body">
+                                            <span class="text text-warning">Delete {{ key }} ?</span>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                            <a class="btn btn-danger btn-ok">Confirm</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <td><button data-path="{{ files_and_size[key][0] }}" data-orig="{{ key }}" type="button" class="btn btn-xs btn-primary" data-toggle="modal" data-target="#Rename">Rename</button></td>
+                        <td><button data-path="{{ files_and_size[key][0] }}" type="button" class="btn btn-xs btn-warning" data-toggle="modal" data-target="#Share">Share</button></td>
+                        <div class="modal fade" id="Share" tabindex="-1" role="dialog" aria-labelledby="myModalLabel1"
+                                aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                                            <h4 class="modal-title" id="myModalLabel1">Share</h4>
+                                        </div>
+                                        <div class="modal-body">
+                                            <input type="text" readonly="readonly" class="form-control" name="share_link" id="share_link" value="">
+                                            <button ></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                    {% else %}
+                        <td><a href="{{ url_for('dir_file_list', dirname=files_and_size[key][0]) }}">{{ key }}</a></td>
+                        <td>{{ files_and_size[key][1] }}</td>
+                        <td>{{ files_and_size[key][2] }}</td>
+                        <td></td>
+                        <td><button data-path="{{ files_and_size[key][0] }}" data-orig="{{ key }}" type="button" class="btn btn-xs btn-primary" data-toggle="modal" data-target="#Rename">Rename</button></td>
+                        <td></td>
+                    {%  endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+        <div class="col-md-6"><div id="pie-file-size" style="height:500px"></div></div>
+        <!-- todo: next fig -->
+        <div class="col-md-6"><div id="bar-file-exten" style="height:500px"></div></div>
+        <div class="col-md-12">
+            <form action="/" method="get">
+                <button type="submit" class="btn btn-info">Main Page</button>
+            </form>
+        </div>
+</div>
+    <div id="Rename" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel">Rename</h4>
+                </div>
+                <div class="modal-body">
+ 						<div class="form-group">
+                            <form id="submit_re" action="{{ url_for('rename') }}" method="post">
+                                <input type="hidden" class="form-control" name="orig" id="orig" value="{{ orig }}">
+                                <input type="hidden" class="form-control" name="path" id="path" value="{{ path }}">
+                                <input type="text" class="form-control" name="new_name" id="new_name" value="{{ new_name }}">
+                            </form>
+ 						</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="submit_re();">Save</button>
+                </div>
+           </div>
+        </div>
+    </div>
+</body>
+</html>
+<script type="text/javascript">
+    $('#confirm-delete').on('show.bs.modal', function (e) {
+        $(this).find('.btn-ok').attr('href', $(e.relatedTarget).data('href'));
+    });
+    $('#Rename').on('show.bs.modal', function (event) {
+        //获取到触发modal的button
+        var button = $(event.relatedTarget);
+        //获取button的传入值
+        var path = button.data('path');
+        var orig = button.data('orig');
+        console.log(path, orig);
+        //获取当前显示的modal
+        var modal = $(this);
+        //设置获取的值到输入框
+        modal.find('.modal-body .form-group #orig').val(orig);
+        modal.find('.modal-body .form-group #path').val(path);
+        modal.find('.modal-body .form-group #new_name').val(orig)
+    });
+    $('#Share').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var path = button.data('path');
+        var modal = $(this);
+        var local = "http://127.0.0.1:5000/file/download/";
+        path = local + path.slice(2);
+        modal.find('.modal-body #share_link').val(path);
+    });
+    function submit_re(){
+        $("#submit_re").submit();//或者jQuery方式,二选一，不过现在已经没啥项目不引入jQuery了吧。。。
+    }
+    var pie_file_size = echarts.init(document.getElementById('pie-file-size'));
+    var bar_file_exten = echarts.init(document.getElementById('bar-file-exten'));
+    $.ajax({
+        url:'/get_pie_file_size_data',
+        success:function (data) {
+            json_data = JSON.parse(data)
+            option = {
+                title: {
+                    text: 'File PIE',
+                    left: 'center',
+                    textStyle: {
+                        color: '#31708f'
+                    }
+                },
+                tooltip : {
+                    trigger: 'item',
+                    formatter: "{a} : {b} <br/>size : {c}MB ({d}%)"
+                },
+                /*
+                legend: {
+                    type: 'scroll',
+                    orient: 'vertical',
+                    right: 10,
+                    top: 20,
+                    bottom: 20,
+                    data: data['name'],
+                },
+                 */
+                series : [
+                    {
+                        name: 'file',
+                        type: 'pie',
+                        radius : '70%',
+                        center: ['50%', '50%'],
+                        data: json_data.sort(function (a, b) { return b.value - a.value; }),
+                        itemStyle: {
+                            emphasis: {
+                                shadowBlur: 10,
+                                shadowOffsetX: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        }
+                    }
+                ]
+            };
+            pie_file_size.setOption(option);
+        }
+    })
+    $.ajax({
+        url:'/get_bar_file_exten_data',
+        success:function (data) {
+            json_data = JSON.parse(data)
+
+            option = {
+                title: {
+                    text: 'Extensions BAR',
+                    left: 'center',
+                    textStyle: {
+                        color: '#31708f'
+                    }
+                },
+                tooltip : {
+                    trigger: 'item',
+                    formatter: "Exten : {b} <br/>num : {c}"
+                },
+                xAxis: {
+                    type: 'category',
+                    data: json_data['exten']
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: [{
+                    itemStyle: {
+                        normal: {
+                            color:function(d){return "#"+Math.floor(Math.random()*(256*256*256-1)).toString(16);
+                            }}},
+                    data: json_data['num'],
+                    type: 'bar'
+                }]
+            };
+            bar_file_exten.setOption(option);
+        }
+    })
+</script>
