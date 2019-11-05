@@ -21,12 +21,6 @@ def get_bar_file_exten_data():
     return data
 
 
-@app.route('/', methods=['GET'])
-def index():
-    new_dir()
-    return rt('./index.html')
-
-
 def new_dir():
     if not os.path.exists('./upload'):
         try:
@@ -80,7 +74,7 @@ def make_dir():
     return rt('./index.html')
 
 
-@app.route('/file/list', methods=['GET'])
+@app.route('/', methods=['GET'])
 def file_list():
     files = os.listdir('./upload/')  # 获取文件目录
     files_and_size = {}
@@ -109,7 +103,7 @@ def rename():
         print("rename failed, ", e)
     return redirect('/file/list')
 
-
+'''
 @app.route('/file/list/<path:dirname>', methods=['GET'])
 def dir_file_list(dirname):
     files = os.listdir('./' + dirname + '/')
@@ -125,6 +119,7 @@ def dir_file_list(dirname):
             file_and_size.append(utils.get_file_create_time(file_abs))
             files_and_size[file] = file_and_size
     return rt('./list.html', files_and_size=files_and_size)
+'''
 
 
 @app.route('/file/download/<path:filename>', methods=['GET'])
